@@ -7,16 +7,15 @@ pub(crate) fn replace_macro<'a, 'b>(
     macros: Option<Vec<&MacroDeclaration<'b>>>,
 ) -> Vec<Item<'b>> {
     // initially need to find all macro definitions
-    let macros = match macros {
-        Some(a) => a,
-        None => program
+    let macros = macros.unwrap_or_else(|| {
+        program
             .iter()
             .filter_map(|item| match item {
                 Item::MacroDeclaration(macro_def) => Some(macro_def),
                 _ => None,
             })
-            .collect::<Vec<_>>(),
-    };
+            .collect()
+    });
 
     // then replace each macro call with the macro definition body
     let mut output: Vec<_> = program
@@ -27,12 +26,12 @@ pub(crate) fn replace_macro<'a, 'b>(
             Item::MacroCall(call) => {
                 let macro_definition = macros
                     .iter()
-                    .find(|macro_call| macro_call.identifier == call.identifier);
+                    .find(|macro_call| macro_call.get_identifier() == call.get_identifier());
 
                 macro_definition
-                    .map(|x| x.substitute_arguments(&call.arguments))
+                    .map(|x| x.substitute_arguments(call.get_arguments()))
                     .flatten()
-                    .unwrap_or_else(|| Vec::new())
+                    .unwrap_or_else(Vec::new)
             }
         })
         .collect();

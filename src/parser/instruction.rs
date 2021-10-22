@@ -16,13 +16,12 @@ use strum::{Display, EnumString, EnumVariantNames, VariantNames};
 /// Stores information about a single instruction
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) struct Instruction<'a> {
-    pub(crate) label: Option<&'a str>,
-    pub(crate) opcode: Opcode,
-    pub(crate) operand: Option<&'a str>,
+    label: Option<&'a str>,
+    opcode: Opcode,
+    operand: Option<&'a str>,
 }
 
 impl<'a> Instruction<'a> {
-    #[allow(dead_code)]
     /// Creates a new instruction from the given information
     pub(crate) fn new(label: Option<&'a str>, opcode: Opcode, operand: Option<&'a str>) -> Self {
         Self {
@@ -40,6 +39,11 @@ impl<'a> Instruction<'a> {
             operand: Some(operand),
         }
     }
+
+    /// Gets the instructions operand
+    pub(crate) fn get_operand(&self) -> Option<&'a str> {
+        self.operand
+    }
 }
 
 impl<'a> Display for Instruction<'a> {
@@ -56,6 +60,7 @@ impl<'a> Display for Instruction<'a> {
 }
 
 /// Various opcodes
+#[allow(clippy::upper_case_acronyms)]
 #[derive(EnumVariantNames, EnumString, Display, PartialEq, Debug, Clone)]
 pub(crate) enum Opcode {
     ADD,
@@ -115,11 +120,9 @@ pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
             ),
         )),
         |(label, opcode, operand)| {
-            Opcode::from_str(opcode).ok().map(|opcode| Instruction {
-                label,
-                opcode,
-                operand,
-            })
+            Opcode::from_str(opcode)
+                .ok()
+                .map(|opcode| Instruction::new(label, opcode, operand))
         },
     )(input)
 }

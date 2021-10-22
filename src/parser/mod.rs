@@ -42,14 +42,10 @@ pub(crate) fn parse_program(input: &str) -> IResult<&str, Vec<Item>> {
         multispace0,
         alt((
             // depending on the type of item matched, put in correct item enum
-            map(macro_declaration, |macro_decl| {
-                Item::MacroDeclaration(macro_decl)
-            }),
-            map(macro_call, |macro_call| Item::MacroCall(macro_call)),
-            map(instruction::parse_instruction, |inst| {
-                Item::Instruction(inst)
-            }),
-            map(comment, |comment| Item::Comment(comment)),
+            map(macro_declaration, Item::MacroDeclaration),
+            map(macro_call, Item::MacroCall),
+            map(instruction::parse_instruction, Item::Instruction),
+            map(comment, Item::Comment),
         )),
         // due to limitations with my program, comments on the end of the line will be discarded
         opt(comment),

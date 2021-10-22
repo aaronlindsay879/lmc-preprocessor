@@ -12,8 +12,27 @@ use super::identifier;
 /// Stores information about a single macro call
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) struct MacroCall<'a> {
-    pub(crate) identifier: &'a str,
-    pub(crate) arguments: Vec<&'a str>,
+    identifier: &'a str,
+    arguments: Vec<&'a str>,
+}
+
+impl<'a> MacroCall<'a> {
+    /// Creates a new macro call from the given information
+    pub(crate) fn new(identifier: &'a str, arguments: Vec<&'a str>) -> Self {
+        Self {
+            identifier,
+            arguments,
+        }
+    }
+
+    /// Gets the macro calls identifier
+    pub(crate) fn get_identifier(&self) -> &'a str {
+        self.identifier
+    }
+
+    pub(crate) fn get_arguments(&self) -> &Vec<&'a str> {
+        &self.arguments
+    }
 }
 
 /// Parses a single macro call, such as "IN_STO!(a)"
@@ -27,10 +46,7 @@ pub(crate) fn macro_call(input: &str) -> IResult<&str, MacroCall> {
                 tag(")"),
             ),
         ),
-        |(identifier, arguments)| MacroCall {
-            identifier,
-            arguments,
-        },
+        |(identifier, arguments)| MacroCall::new(identifier, arguments),
     )(input)
 }
 
@@ -45,16 +61,16 @@ mod test {
 
     #[test]
     fn test_macro_substitute() {
-        let macro_defn = MacroDeclaration {
-            identifier: "IN_STO",
-            arguments: vec!["a", "b"],
-            body: vec![
+        let macro_defn = MacroDeclaration::new(
+            "IN_STO",
+            vec!["a", "b"],
+            vec![
                 Item::Instruction(Instruction::new(None, Opcode::IN, None)),
                 Item::Instruction(Instruction::new(None, Opcode::STO, Some("a"))),
                 Item::Instruction(Instruction::new(None, Opcode::STO, Some("a"))),
                 Item::Instruction(Instruction::new(None, Opcode::STO, Some("b"))),
             ],
-        };
+        );
 
         assert_eq!(macro_defn.substitute_arguments(&[]), None);
         assert_eq!(macro_defn.substitute_arguments(&["count"]), None);
@@ -92,14 +108,14 @@ mod test {
 
         assert_eq!(
             macro_parsed,
-            MacroDeclaration {
-                identifier: "IN_STO",
-                arguments: vec!["location"],
-                body: vec![
+            MacroDeclaration::new(
+                "IN_STO",
+                vec!["location"],
+                vec![
                     Item::Instruction(Instruction::new(None, Opcode::IN, None)),
                     Item::Instruction(Instruction::new(None, Opcode::STO, Some("location")))
                 ]
-            }
+            )
         );
     }
 

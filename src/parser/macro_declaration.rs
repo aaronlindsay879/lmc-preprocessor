@@ -14,12 +14,26 @@ use super::{identifier, macro_call::MacroCall, Item};
 /// Stores information about a single macro declaration.
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) struct MacroDeclaration<'a> {
-    pub(crate) identifier: &'a str,
-    pub(crate) arguments: Vec<&'a str>,
-    pub(crate) body: Vec<Item<'a>>,
+    identifier: &'a str,
+    arguments: Vec<&'a str>,
+    body: Vec<Item<'a>>,
 }
 
 impl<'a> MacroDeclaration<'a> {
+    /// Creates a new macro declaration from the given information
+    pub(crate) fn new(identifier: &'a str, arguments: Vec<&'a str>, body: Vec<Item<'a>>) -> Self {
+        Self {
+            identifier,
+            arguments,
+            body,
+        }
+    }
+
+    /// Gets the macro declaration's identifier
+    pub(crate) fn get_identifier(&self) -> &str {
+        self.identifier
+    }
+
     /// Substitutes the given arguments into the macro, replacing all occurences with the same index.
     /// If the lengths of the new arguments and existing arguments do not match, None will be returned.
     pub(crate) fn substitute_arguments(&self, new_args: &[&'a str]) -> Option<Vec<Item<'a>>> {
@@ -56,7 +70,7 @@ fn substitute_argument_item<'a>(
     match item {
         Item::Instruction(instruction) => {
             // easy case, just check if argument is in map, and replace if so
-            match argument_map.get(instruction.operand.unwrap_or_default()) {
+            match argument_map.get(instruction.get_operand().unwrap_or_default()) {
                 Some(new_arg) => Item::Instruction(instruction.clone_with_operand(new_arg)),
                 None => item.clone(),
             }
@@ -64,16 +78,13 @@ fn substitute_argument_item<'a>(
         Item::MacroCall(macro_call) => {
             // slightly more tricky as can have multiple arguments, but basically repeat above for each argument
             let arguments = macro_call
-                .arguments
+                .get_arguments()
                 .iter()
                 .map(|argument| *argument_map.get(argument).unwrap_or(argument))
                 .collect();
 
             // then can just reconstruct a macro call
-            Item::MacroCall(MacroCall {
-                identifier: macro_call.identifier,
-                arguments,
-            })
+            Item::MacroCall(MacroCall::new(macro_call.get_identifier(), arguments))
         }
         _ => item.clone(),
     }
@@ -102,10 +113,6 @@ pub(crate) fn macro_declaration(input: &str) -> IResult<&str, MacroDeclaration> 
                 pair(multispace0, tag("}")),
             ),
         )),
-        |(identifier, arguments, body)| MacroDeclaration {
-            identifier,
-            arguments,
-            body: body,
-        },
+        |(identifier, arguments, body)| MacroDeclaration::new(identifier, arguments, body),
     )(input)
 }
