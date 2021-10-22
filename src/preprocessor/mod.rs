@@ -1,6 +1,8 @@
 use crate::parser::Item;
 
-pub(crate) fn replace_macro(program: Vec<Item>) -> Vec<Item> {
+/// Goes through the program, creating a new one with all macro invocations replaced with the given macro body.
+/// If a macro does not have a declaration, it is simply ignored and replaced with nothing.
+pub(crate) fn replace_macro<'a>(program: &'a [Item]) -> Vec<Item<'a>> {
     // initially need to find all macro definitions
     let macros = program
         .iter()
@@ -30,7 +32,8 @@ pub(crate) fn replace_macro(program: Vec<Item>) -> Vec<Item> {
         .collect()
 }
 
-pub(crate) fn assemble(program: Vec<Item>) -> String {
+/// Converts a given program back to the string representation in assembly
+pub(crate) fn to_assembly(program: Vec<Item>) -> String {
     program.iter().fold(String::new(), |acc, item| {
         format!(
             "{}{}\n",

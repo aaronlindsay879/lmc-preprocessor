@@ -1,24 +1,26 @@
 mod instruction;
-mod macros;
+mod macro_call;
+mod macro_declaration;
 
-use self::macros::{macro_call, macro_declaration, Macro, MacroCall};
-use instruction::{Instruction, Opcode};
+use self::{
+    macro_call::{macro_call, MacroCall},
+    macro_declaration::{macro_declaration, MacroDeclaration},
+};
+use instruction::Instruction;
 use nom::{
     branch::alt,
-    bytes::complete::{tag, tag_no_case, take_while},
-    character::complete::{multispace0, not_line_ending, space0, space1},
-    combinator::{map, map_opt, opt},
+    bytes::complete::{tag, take_while},
+    character::complete::{multispace0, not_line_ending},
+    combinator::{map, opt},
     multi::many0,
-    sequence::{delimited, preceded, tuple},
+    sequence::{delimited, preceded},
     AsChar, IResult,
 };
-use std::str::FromStr;
-use strum::VariantNames;
 
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) enum Item<'a> {
     Instruction(Instruction<'a>),
-    MacroDeclaration(Macro<'a>),
+    MacroDeclaration(MacroDeclaration<'a>),
     MacroCall(MacroCall<'a>),
     Comment(&'a str),
 }
@@ -28,16 +30,18 @@ fn comment(input: &str) -> IResult<&str, &str> {
     preceded(tag("#"), not_line_ending)(input)
 }
 
-fn identifier_chars(input: &str) -> IResult<&str, &str> {
+/// Matches valid identifiers, such as "aaa_b"
+fn identifier(input: &str) -> IResult<&str, &str> {
     take_while(|c: char| c.is_alpha() || c == '_')(input)
 }
 
 /// Parses an entire program, returning a vector of instructions and discarding comments
 pub(crate) fn parse_program(input: &str) -> IResult<&str, Vec<Item>> {
-    //separated_list0(multispace0, instruction)(input)
+    // a program consists of many (macro declarations, macro calls, instructions, comments) delimeted by spaces/newlines
     many0(delimited(
         multispace0,
         alt((
+            // depending on the type of item matched, put in correct item enum
             map(macro_declaration, |macro_decl| {
                 Item::MacroDeclaration(macro_decl)
             }),
@@ -47,6 +51,7 @@ pub(crate) fn parse_program(input: &str) -> IResult<&str, Vec<Item>> {
             }),
             map(comment, |comment| Item::Comment(comment)),
         )),
+        // due to limitations with my program, comments on the end of the line will be discarded
         opt(comment),
     ))(input)
 }

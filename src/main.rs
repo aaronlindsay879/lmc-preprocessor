@@ -1,13 +1,13 @@
 use parser::parse_program;
-use preprocessor::{assemble, replace_macro};
+use preprocessor::{replace_macro, to_assembly};
 
 mod parser;
 mod preprocessor;
 
 fn preprocess(input: &str) -> Option<String> {
     let program = parse_program(input).ok()?.1;
-    let program = replace_macro(program);
-    Some(assemble(program))
+    let program = replace_macro(&program);
+    Some(to_assembly(program))
 }
 
 fn main() {

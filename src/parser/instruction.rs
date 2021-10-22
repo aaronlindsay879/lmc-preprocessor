@@ -13,8 +13,7 @@ use nom::{
 };
 use strum::{Display, EnumString, EnumVariantNames, VariantNames};
 
-use crate::parser::identifier_chars;
-
+/// Stores information about a single instruction
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) struct Instruction<'a> {
     pub(crate) label: Option<&'a str>,
@@ -23,6 +22,7 @@ pub(crate) struct Instruction<'a> {
 }
 
 impl<'a> Instruction<'a> {
+    /// Creates a new instruction from the given information
     pub(crate) fn new(label: Option<&'a str>, opcode: Opcode, operand: Option<&'a str>) -> Self {
         Self {
             label,
@@ -45,6 +45,7 @@ impl<'a> Display for Instruction<'a> {
     }
 }
 
+/// Various opcodes
 #[derive(EnumVariantNames, EnumString, Display, PartialEq, Debug, Clone)]
 pub(crate) enum Opcode {
     ADD,
@@ -62,6 +63,7 @@ pub(crate) enum Opcode {
 
 /// Matches a single instruction (optionally with a label), such as "label   ADD 10"
 pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
+    /// Matches one of the given strings (ignoring case), returning the first match
     fn alternative<'a>(input: &'a str, alternatives: &'a [&'a str]) -> IResult<&'a str, &'a str> {
         for alt in alternatives {
             match tag_no_case::<&str, &str, nom::error::Error<&str>>(alt)(input) {
@@ -78,18 +80,26 @@ pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
 
     map_opt(
         alt((
+            // match format "[label] [opcode] [operand]?"
             map(
                 tuple((
                     take_while(AsChar::is_alphanum),
                     preceded(space1, |str| alternative(str, Opcode::VARIANTS)),
-                    opt(preceded(space1, identifier_chars)),
+                    opt(preceded(
+                        space1,
+                        take_while(|c| AsChar::is_alphanum(c) || c == '_'),
+                    )),
                 )),
                 |(label, opcode, operand)| (Some(label), opcode, operand),
             ),
+            // match format "[opcode] [operand]?"
             map(
                 tuple((
                     preceded(space0, |str| alternative(str, Opcode::VARIANTS)),
-                    opt(preceded(space1, identifier_chars)),
+                    opt(preceded(
+                        space1,
+                        take_while(|c| AsChar::is_alphanum(c) || c == '_'),
+                    )),
                 )),
                 |(opcode, operand)| (None, opcode, operand),
             ),
