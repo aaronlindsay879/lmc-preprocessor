@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use nom::{
     bytes::complete::tag,
     character::complete::multispace0,
@@ -7,7 +9,7 @@ use nom::{
     IResult,
 };
 
-use super::{identifier, instruction::Instruction, macro_call::MacroCall, Item};
+use super::{identifier, macro_call::MacroCall, Item};
 
 /// Stores information about a single macro declaration.
 #[derive(PartialEq, Debug, Clone)]
@@ -26,47 +28,54 @@ impl<'a> MacroDeclaration<'a> {
             return None;
         }
 
+        // create a map of macro declaration arg names -> replacement arg names
+        let arg_map = {
+            let mut map = HashMap::with_capacity(self.arguments.len());
+            for (&a, &b) in self.arguments.iter().zip(new_args.iter()) {
+                map.insert(a, b);
+            }
+
+            map
+        };
+
+        // then simply replace all arguments using helper function
         Some(
             self.body
                 .iter()
-                .map(|item| {
-                    // find the index of the items operand in the macros argument list
-                    let index = self.arguments.iter().position(|&elem| match item {
-                        Item::Instruction(Instruction { operand, .. }) => Some(elem) == *operand,
-                        Item::MacroCall(MacroCall { arguments, .. }) => arguments.contains(&elem),
-                        _ => false,
-                    });
-
-                    // if the operand is in the argument list, create a new instruction with the
-                    // operand from the same position in the replacements list
-                    // if the operand is _not_ in the arguments list, simply return the instruction (cloned)
-                    match index {
-                        // Some(index) => Item::Instruction(Instruction::new(
-                        //     inst.label,
-                        //     inst.opcode.clone(),
-                        //     Some(new_args[index]),
-                        // )),
-                        Some(index) => match item {
-                            Item::Instruction(inst) => Item::Instruction(Instruction::new(
-                                inst.label,
-                                inst.opcode.clone(),
-                                Some(new_args[index]),
-                            )),
-                            Item::MacroCall(call) => Item::MacroCall(MacroCall {
-                                identifier: call.identifier,
-                                arguments: call
-                                    .arguments
-                                    .iter()
-                                    .map(|&x| if self.arguments.contains(&x) { "a" } else { x })
-                                    .collect(),
-                            }),
-                            _ => item.clone(),
-                        },
-                        _ => item.clone(),
-                    }
-                })
+                .map(|item| substitute_argument_item(item, &arg_map))
                 .collect(),
         )
+    }
+}
+
+/// Substitutes the arguments in a macro call for a single item.
+fn substitute_argument_item<'a>(
+    item: &Item<'a>,
+    argument_map: &HashMap<&'a str, &'a str>,
+) -> Item<'a> {
+    match item {
+        Item::Instruction(instruction) => {
+            // easy case, just check if argument is in map, and replace if so
+            match argument_map.get(instruction.operand.unwrap_or_default()) {
+                Some(new_arg) => Item::Instruction(instruction.clone_with_operand(new_arg)),
+                None => item.clone(),
+            }
+        }
+        Item::MacroCall(macro_call) => {
+            // slightly more tricky as can have multiple arguments, but basically repeat above for each argument
+            let arguments = macro_call
+                .arguments
+                .iter()
+                .map(|argument| *argument_map.get(argument).unwrap_or(argument))
+                .collect();
+
+            // then can just reconstruct a macro call
+            Item::MacroCall(MacroCall {
+                identifier: macro_call.identifier,
+                arguments,
+            })
+        }
+        _ => item.clone(),
     }
 }
 

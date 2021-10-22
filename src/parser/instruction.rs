@@ -22,12 +22,22 @@ pub(crate) struct Instruction<'a> {
 }
 
 impl<'a> Instruction<'a> {
+    #[allow(dead_code)]
     /// Creates a new instruction from the given information
     pub(crate) fn new(label: Option<&'a str>, opcode: Opcode, operand: Option<&'a str>) -> Self {
         Self {
             label,
             opcode,
             operand,
+        }
+    }
+
+    /// Creates a new instruction identical to the current one, but with a different operand
+    pub(crate) fn clone_with_operand(&self, operand: &'a str) -> Self {
+        Self {
+            label: self.label,
+            opcode: self.opcode.clone(),
+            operand: Some(operand),
         }
     }
 }
@@ -125,11 +135,11 @@ mod test {
                 $(
                     assert_eq!(
                         parse_instruction($input),
-                        Ok(("", Instruction {
-                            label: $label,
-                            opcode: $opcode,
-                            operand: $operand
-                        }))
+                        Ok(("", Instruction::new(
+                            $label,
+                            $opcode,
+                            $operand
+                        )))
                     );
                 )*
             };
