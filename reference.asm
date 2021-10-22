@@ -1,5 +1,9 @@
 IN_STO(location) = {
 	IN
+	COMPLEX_STO!(location)
+}
+
+COMPLEX_STO(location) = {
 	STO location
 }
 

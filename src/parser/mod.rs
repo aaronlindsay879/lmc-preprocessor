@@ -1,6 +1,6 @@
 mod instruction;
 mod macro_call;
-mod macro_declaration;
+pub(crate) mod macro_declaration;
 
 use self::{
     macro_call::{macro_call, MacroCall},

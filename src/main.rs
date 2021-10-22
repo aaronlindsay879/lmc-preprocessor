@@ -1,3 +1,4 @@
+use clap::Parser;
 use parser::parse_program;
 use preprocessor::{replace_macro, to_assembly};
 
@@ -6,25 +7,28 @@ mod preprocessor;
 
 fn preprocess(input: &str) -> Option<String> {
     let program = parse_program(input).ok()?.1;
-    let program = replace_macro(&program);
+    let program = replace_macro(&program, None);
     Some(to_assembly(program))
 }
 
-fn main() {
-    println!(
-        "{}",
-        preprocess(
-            "
-            IN_STO(location_a, location_b) = {
-                    IN
-                    STO location_a
-                    STO location_b
-            }
+#[derive(Parser)]
+#[clap(version = "0.1")]
+struct Options {
+    path: Option<String>,
+}
 
-            IN_STO!(a, b)
-            IN_STO!(c, d)
-            "
-        )
-        .unwrap()
-    );
+fn main() {
+    let options = Options::parse();
+
+    match options.path {
+        Some(path) => {
+            let data = std::fs::read_to_string(path);
+            if let Ok(data) = data {
+                println!("{}", preprocess(&data).unwrap());
+            } else {
+                println!("Failed to read file!");
+            }
+        }
+        _ => todo!(),
+    }
 }

@@ -49,10 +49,10 @@ mod test {
             identifier: "IN_STO",
             arguments: vec!["a", "b"],
             body: vec![
-                Instruction::new(None, Opcode::IN, None),
-                Instruction::new(None, Opcode::STO, Some("a")),
-                Instruction::new(None, Opcode::STO, Some("a")),
-                Instruction::new(None, Opcode::STO, Some("b")),
+                Item::Instruction(Instruction::new(None, Opcode::IN, None)),
+                Item::Instruction(Instruction::new(None, Opcode::STO, Some("a"))),
+                Item::Instruction(Instruction::new(None, Opcode::STO, Some("a"))),
+                Item::Instruction(Instruction::new(None, Opcode::STO, Some("b"))),
             ],
         };
 
@@ -96,8 +96,8 @@ mod test {
                 identifier: "IN_STO",
                 arguments: vec!["location"],
                 body: vec![
-                    Instruction::new(None, Opcode::IN, None),
-                    Instruction::new(None, Opcode::STO, Some("location"))
+                    Item::Instruction(Instruction::new(None, Opcode::IN, None)),
+                    Item::Instruction(Instruction::new(None, Opcode::STO, Some("location")))
                 ]
             }
         );
