@@ -1,3 +1,5 @@
+use std::io::Read;
+
 use clap::Parser;
 use parser::parse_program;
 use preprocessor::{replace_macro, to_assembly};
@@ -20,15 +22,29 @@ struct Options {
 fn main() {
     let options = Options::parse();
 
-    match options.path {
-        Some(path) => {
-            let data = std::fs::read_to_string(path);
-            if let Ok(data) = data {
-                println!("{}", preprocess(&data).unwrap());
+    let data = match options.path {
+        Some(path) => std::fs::read_to_string(path).ok(),
+        _ => {
+            if atty::isnt(atty::Stream::Stdin) {
+                handle_stdin()
             } else {
-                println!("Failed to read file!");
+                None
             }
         }
-        _ => todo!(),
+    };
+
+    match data {
+        Some(data) => match preprocess(&data) {
+            Some(program) => println!("{}", program.trim_end()),
+            None => println!("Failed to parse program!"),
+        },
+        None => println!("Failed to get input!"),
     }
+}
+
+fn handle_stdin() -> Option<String> {
+    let mut data = Vec::new();
+    std::io::stdin().read_to_end(&mut data).ok()?;
+
+    String::from_utf8(data).ok()
 }

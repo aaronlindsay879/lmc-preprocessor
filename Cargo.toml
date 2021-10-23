@@ -10,3 +10,4 @@ nom = "7.0"
 strum = { version = "0.22", features = ["derive"] }
 lazy_static = "1.4.0"
 clap = "3.0.0-beta.5"
+atty = "0.2"
