@@ -1,9 +1,9 @@
-IN_STO(location) = {
+macro IN_STO(location) = {
 	IN
 	COMPLEX_STO!(location)
 }
 
-COMPLEX_STO(location) = {
+macro COMPLEX_STO(location) = {
 	STO location
 }
 

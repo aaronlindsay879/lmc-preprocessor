@@ -53,11 +53,7 @@ pub(crate) fn macro_call(input: &str) -> IResult<&str, MacroCall> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::parser::{
-        instruction::*,
-        macro_declaration::{macro_declaration, MacroDeclaration},
-        Item,
-    };
+    use crate::parser::{instruction::*, macro_declaration::MacroDeclaration, Item};
 
     #[test]
     fn test_macro_substitute() {
@@ -91,31 +87,6 @@ mod test {
                 Item::Instruction(Instruction::new(None, Opcode::STO, Some("count"))),
                 Item::Instruction(Instruction::new(None, Opcode::STO, Some("count_two"))),
             ])
-        );
-    }
-
-    #[test]
-    fn test_macro_parsing() {
-        let macro_str = "IN_STO(location) = {
-            IN
-            STO location
-        }";
-
-        let macro_parsed = macro_declaration(macro_str);
-        println!("{:?}", macro_parsed);
-        assert!(macro_parsed.is_ok());
-        let macro_parsed = macro_parsed.unwrap().1;
-
-        assert_eq!(
-            macro_parsed,
-            MacroDeclaration::new(
-                "IN_STO",
-                vec!["location"],
-                vec![
-                    Item::Instruction(Instruction::new(None, Opcode::IN, None)),
-                    Item::Instruction(Instruction::new(None, Opcode::STO, Some("location")))
-                ]
-            )
         );
     }
 

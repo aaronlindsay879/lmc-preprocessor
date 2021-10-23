@@ -5,7 +5,7 @@ use nom::{
     character::complete::multispace0,
     combinator::{map, opt},
     multi::separated_list0,
-    sequence::{delimited, pair, tuple},
+    sequence::{delimited, pair, preceded, tuple},
     IResult,
 };
 
@@ -99,7 +99,7 @@ pub(crate) fn macro_declaration(input: &str) -> IResult<&str, MacroDeclaration> 
     map(
         tuple((
             // matches the identifier
-            identifier,
+            preceded(tag("macro "), identifier),
             // matches the argument list
             delimited(
                 tag("("),
@@ -115,4 +115,35 @@ pub(crate) fn macro_declaration(input: &str) -> IResult<&str, MacroDeclaration> 
         )),
         |(identifier, arguments, body)| MacroDeclaration::new(identifier, arguments, body),
     )(input)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::parser::instruction::{Instruction, Opcode};
+
+    #[test]
+    fn test_macro_parsing() {
+        let macro_str = "macro IN_STO(location) = {
+            IN
+            STO location
+        }";
+
+        let macro_parsed = macro_declaration(macro_str);
+        println!("{:?}", macro_parsed);
+        assert!(macro_parsed.is_ok());
+        let macro_parsed = macro_parsed.unwrap().1;
+
+        assert_eq!(
+            macro_parsed,
+            MacroDeclaration::new(
+                "IN_STO",
+                vec!["location"],
+                vec![
+                    Item::Instruction(Instruction::new(None, Opcode::IN, None)),
+                    Item::Instruction(Instruction::new(None, Opcode::STO, Some("location")))
+                ]
+            )
+        );
+    }
 }
