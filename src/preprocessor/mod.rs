@@ -53,18 +53,3 @@ pub(crate) fn replace_macro<'a, 'b>(program: &'a [Item<'b>]) -> Vec<Item<'b>> {
 
     output
 }
-
-/// Converts a given program back to the string representation in assembly
-pub(crate) fn to_assembly(program: Vec<Item>) -> String {
-    program.iter().fold(String::new(), |acc, item| {
-        format!(
-            "{}{}\n",
-            acc,
-            match item {
-                Item::Instruction(inst) => inst.to_string(),
-                Item::Comment(comment) => comment.to_string(),
-                _ => unreachable!(),
-            }
-        )
-    })
-}

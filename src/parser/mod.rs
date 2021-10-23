@@ -15,6 +15,7 @@ use nom::{
     sequence::{delimited, preceded},
     AsChar, IResult,
 };
+use std::fmt::{self, Display, Formatter};
 
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) enum Item<'a> {
@@ -22,6 +23,16 @@ pub(crate) enum Item<'a> {
     MacroDeclaration(MacroDeclaration<'a>),
     MacroCall(MacroCall<'a>),
     Comment(&'a str),
+}
+
+impl<'a> Display for Item<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Item::Instruction(instruction) => write!(f, "{}", instruction),
+            Item::Comment(comment) => write!(f, "{}", comment),
+            _ => write!(f, ""),
+        }
+    }
 }
 
 /// Matches a comment, such as "# this is a comment"
