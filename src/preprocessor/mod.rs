@@ -1,4 +1,4 @@
-use crate::parser::{macro_declaration::MacroDeclaration, Item};
+use crate::parser::{macros::macro_declaration::MacroDeclaration, Item};
 
 /// Goes through the program, creating a new one with all macro invocations replaced with the given macro body.
 /// If a macro does not have a declaration, it is simply ignored and replaced with nothing.

@@ -1,10 +1,9 @@
 mod instruction;
-mod macro_call;
-pub(crate) mod macro_declaration;
+pub(crate) mod macros;
 
 use self::{
-    macro_call::{macro_call, MacroCall},
-    macro_declaration::{macro_declaration, MacroDeclaration},
+    macros::macro_call::{macro_call, MacroCall},
+    macros::macro_declaration::{macro_declaration, MacroDeclaration},
 };
 use instruction::Instruction;
 use nom::{

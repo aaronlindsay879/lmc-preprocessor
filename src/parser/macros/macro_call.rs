@@ -7,7 +7,7 @@ use nom::{
     IResult,
 };
 
-use super::identifier;
+use super::super::identifier;
 
 /// Stores information about a single macro call
 #[derive(PartialEq, Debug, Clone)]
@@ -53,7 +53,7 @@ pub(crate) fn macro_call(input: &str) -> IResult<&str, MacroCall> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::parser::{instruction::*, macro_declaration::MacroDeclaration, Item};
+    use crate::parser::{instruction::*, macros::macro_declaration::MacroDeclaration, Item};
 
     #[test]
     fn test_macro_substitute() {

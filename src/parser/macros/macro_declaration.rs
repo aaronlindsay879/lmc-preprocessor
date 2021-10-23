@@ -9,7 +9,10 @@ use nom::{
     IResult,
 };
 
-use super::{identifier, macro_call::MacroCall, Item};
+use super::{
+    super::{identifier, Item},
+    macro_call::MacroCall,
+};
 
 /// Stores information about a single macro declaration.
 #[derive(PartialEq, Debug, Clone)]
@@ -93,7 +96,7 @@ fn substitute_argument_item<'a>(
 /// Matches a macro declaration
 pub(crate) fn macro_declaration(input: &str) -> IResult<&str, MacroDeclaration> {
     // a macro declaration looks like
-    // IDENTIFIER(ARGUMENTS, ARGUMENTS, ...) => {
+    // macro IDENTIFIER(ARGUMENTS, ARGUMENTS, ...) => {
     //     PROGRAM
     // }
     map(
@@ -106,10 +109,10 @@ pub(crate) fn macro_declaration(input: &str) -> IResult<&str, MacroDeclaration> 
                 separated_list0(pair(tag(","), opt(multispace0)), identifier),
                 tag(")"),
             ),
-            // matches the function bodyd
+            // matches the macro body
             delimited(
                 tuple((multispace0, tag("="), multispace0, (tag("{")))),
-                super::parse_program,
+                super::super::parse_program,
                 pair(multispace0, tag("}")),
             ),
         )),
