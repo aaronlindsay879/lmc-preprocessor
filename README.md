@@ -21,5 +21,5 @@ IN_STO!(c)
 ```
 
 ## Usage
-* Piped data: `echo "ADD 10" | ./lmc-preprocesor`
-* Data from a file: `./lmc-preprocesor reference.asm`
+* Piped data: `echo "ADD 10" | ./lmc-preprocessor`
+* Data from a file: `./lmc-preprocessor reference.asm`
