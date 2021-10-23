@@ -10,7 +10,7 @@ STO c
 ```
 could be written as 
 ```
-IN_STO(location) = {
+macro IN_STO(location) = {
     IN
     STO location
 }

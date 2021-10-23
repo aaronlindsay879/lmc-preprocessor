@@ -7,7 +7,7 @@ mod preprocessor;
 
 fn preprocess(input: &str) -> Option<String> {
     let program = parse_program(input).ok()?.1;
-    let program = replace_macro(&program, None);
+    let program = replace_macro(&program);
     Some(to_assembly(program))
 }
 
