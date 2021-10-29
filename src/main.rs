@@ -66,9 +66,12 @@ fn output(options: &Options, program: &[Item]) -> Result<(), &'static str> {
             }
         }
         None => {
-            for item in program {
-                println!("{}", item)
-            }
+            println!(
+                "{}",
+                program
+                    .iter()
+                    .fold(String::new(), |acc, item| acc + "\n" + &item.to_string())
+            )
         }
     }
 

@@ -8,7 +8,7 @@ use self::{
 use instruction::Instruction;
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_while},
+    bytes::complete::{tag, take_while1},
     character::complete::{multispace0, not_line_ending},
     combinator::{map, opt},
     multi::many0,
@@ -42,7 +42,7 @@ fn comment(input: &str) -> IResult<&str, &str> {
 
 /// Matches valid identifiers, such as "aaa_b"
 fn identifier(input: &str) -> IResult<&str, &str> {
-    take_while(|c: char| c.is_alpha() || c == '_')(input)
+    take_while1(|c: char| c.is_alpha() || c == '_')(input)
 }
 
 /// Parses an entire program, returning a vector of instructions and discarding comments
@@ -58,7 +58,7 @@ pub(crate) fn parse_program(input: &str) -> IResult<&str, Vec<Item>> {
             map(comment, Item::Comment),
         )),
         // due to limitations with my program, comments on the end of the line will be discarded
-        opt(comment),
+        delimited(multispace0, opt(comment), multispace0),
     ))(input)
 }
 

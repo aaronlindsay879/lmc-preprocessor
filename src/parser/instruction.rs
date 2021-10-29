@@ -6,9 +6,9 @@ use std::{
 use nom::{
     branch::alt,
     bytes::complete::{tag_no_case, take_while},
-    character::complete::{space0, space1},
-    combinator::{map, map_opt, opt},
-    sequence::{preceded, tuple},
+    character::complete::{multispace1, space0, space1},
+    combinator::{eof, map, map_opt, opt, peek},
+    sequence::{preceded, terminated, tuple},
     AsChar, IResult,
 };
 use strum::{Display, EnumString, EnumVariantNames, VariantNames};
@@ -52,9 +52,9 @@ impl<'a> Display for Instruction<'a> {
             (Some(label), Some(operand)) => {
                 write!(f, "{} {} {}", label, self.opcode.to_string(), operand)
             }
-            (Some(label), None) => write!(f, "{} {}", label, self.opcode.to_string()),
-            (None, Some(operand)) => write!(f, "{} {}", self.opcode.to_string(), operand),
-            _ => write!(f, "{}", self.opcode.to_string()),
+            (Some(label), None) => write!(f, "{}\t{}", label, self.opcode.to_string()),
+            (None, Some(operand)) => write!(f, "\t{}\t{}", self.opcode.to_string(), operand),
+            _ => write!(f, "\t{}", self.opcode.to_string()),
         }
     }
 }
@@ -80,8 +80,12 @@ pub(crate) enum Opcode {
 pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
     /// Matches one of the given strings (ignoring case), returning the first match
     fn alternative<'a>(input: &'a str, alternatives: &'a [&'a str]) -> IResult<&'a str, &'a str> {
-        for alt in alternatives {
-            match tag_no_case::<&str, &str, nom::error::Error<&str>>(alt)(input) {
+        for alternative in alternatives {
+            match terminated(
+                tag_no_case::<&str, &str, nom::error::Error<&str>>(alternative),
+                peek(alt((multispace1, eof))),
+            )(input)
+            {
                 Ok(ok) => return Ok(ok),
                 _ => continue,
             }
@@ -101,7 +105,7 @@ pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
                     take_while(AsChar::is_alphanum),
                     preceded(space1, |str| alternative(str, Opcode::VARIANTS)),
                     opt(preceded(
-                        space1,
+                        space0,
                         take_while(|c| AsChar::is_alphanum(c) || c == '_'),
                     )),
                 )),
@@ -112,7 +116,7 @@ pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
                 tuple((
                     preceded(space0, |str| alternative(str, Opcode::VARIANTS)),
                     opt(preceded(
-                        space1,
+                        space0,
                         take_while(|c| AsChar::is_alphanum(c) || c == '_'),
                     )),
                 )),
@@ -120,9 +124,17 @@ pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
             ),
         )),
         |(label, opcode, operand)| {
-            Opcode::from_str(opcode)
-                .ok()
-                .map(|opcode| Instruction::new(label, opcode, operand))
+            Opcode::from_str(opcode).ok().map(|opcode| {
+                Instruction::new(
+                    label,
+                    opcode,
+                    if let Some("") = operand {
+                        None
+                    } else {
+                        operand
+                    },
+                )
+            })
         },
     )(input)
 }
@@ -150,7 +162,9 @@ mod test {
 
         test_inst!(
             "ADD 10" => None, Opcode::ADD, Some("10"),
+            "LDA storage" => None, Opcode::LDA, Some("storage"),
             "aaaa ADD 10" => Some("aaaa"), Opcode::ADD, Some("10"),
+            "OUT" => None, Opcode::OUT, None,
             "IN" => None, Opcode::IN, None,
             "aaa IN" => Some("aaa"), Opcode::IN, None,
             "abc DAT 10" => Some("abc"), Opcode::DAT, Some("10")
