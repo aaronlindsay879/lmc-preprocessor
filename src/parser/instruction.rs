@@ -50,7 +50,7 @@ impl<'a> Display for Instruction<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match (self.label, self.operand) {
             (Some(label), Some(operand)) => {
-                write!(f, "{} {} {}", label, self.opcode.to_string(), operand)
+                write!(f, "{}\t{}\t{}", label, self.opcode.to_string(), operand)
             }
             (Some(label), None) => write!(f, "{}\t{}", label, self.opcode.to_string()),
             (None, Some(operand)) => write!(f, "\t{}\t{}", self.opcode.to_string(), operand),
@@ -106,7 +106,7 @@ pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
                     preceded(space1, |str| alternative(str, Opcode::VARIANTS)),
                     opt(preceded(
                         space0,
-                        take_while(|c| AsChar::is_alphanum(c) || c == '_'),
+                        take_while(|c| AsChar::is_alphanum(c) || ['_', '$'].contains(&c)),
                     )),
                 )),
                 |(label, opcode, operand)| (Some(label), opcode, operand),
@@ -117,7 +117,7 @@ pub(crate) fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
                     preceded(space0, |str| alternative(str, Opcode::VARIANTS)),
                     opt(preceded(
                         space0,
-                        take_while(|c| AsChar::is_alphanum(c) || c == '_'),
+                        take_while(|c| AsChar::is_alphanum(c) || ['_', '$'].contains(&c)),
                     )),
                 )),
                 |(opcode, operand)| (None, opcode, operand),

@@ -59,12 +59,12 @@ mod test {
     fn test_macro_substitute() {
         let macro_defn = MacroDeclaration::new(
             "IN_STO",
-            vec!["a", "b"],
+            vec!["$a", "$b"],
             vec![
                 Item::Instruction(Instruction::new(None, Opcode::IN, None)),
-                Item::Instruction(Instruction::new(None, Opcode::STO, Some("a"))),
-                Item::Instruction(Instruction::new(None, Opcode::STO, Some("a"))),
-                Item::Instruction(Instruction::new(None, Opcode::STO, Some("b"))),
+                Item::Instruction(Instruction::new(None, Opcode::STO, Some("$a"))),
+                Item::Instruction(Instruction::new(None, Opcode::STO, Some("$a"))),
+                Item::Instruction(Instruction::new(None, Opcode::STO, Some("$b"))),
             ],
         );
 

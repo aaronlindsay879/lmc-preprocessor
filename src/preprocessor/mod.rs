@@ -12,7 +12,7 @@ pub(crate) fn replace_macro<'a, 'b>(program: &'a [Item<'b>]) -> Vec<Item<'b>> {
             .iter()
             .flat_map(|item| match item.clone() {
                 // simply move instructions over, no changes required
-                Item::Instruction(inst) => vec![Item::Instruction(inst)],
+                item @ Item::Instruction(_) | item @ Item::Comment(_) => vec![item],
                 Item::MacroCall(call) => {
                     // find the corresponding macro definition
                     let macro_definition = macros

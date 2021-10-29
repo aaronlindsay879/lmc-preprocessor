@@ -10,9 +10,9 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::{multispace0, not_line_ending},
-    combinator::{map, opt},
+    combinator::map,
     multi::many0,
-    sequence::{delimited, preceded},
+    sequence::preceded,
     AsChar, IResult,
 };
 use std::fmt::{self, Display, Formatter};
@@ -22,14 +22,14 @@ pub(crate) enum Item<'a> {
     Instruction(Instruction<'a>),
     MacroDeclaration(MacroDeclaration<'a>),
     MacroCall(MacroCall<'a>),
-    Comment(&'a str),
+    Comment(String),
 }
 
 impl<'a> Display for Item<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Item::Instruction(instruction) => write!(f, "{}", instruction),
-            Item::Comment(comment) => write!(f, "{}", comment),
+            Item::Comment(comment) => write!(f, "#{}", comment),
             _ => write!(f, ""),
         }
     }
@@ -48,26 +48,33 @@ fn identifier(input: &str) -> IResult<&str, &str> {
 /// Parses an entire program, returning a vector of instructions and discarding comments
 pub(crate) fn parse_program(input: &str) -> IResult<&str, Vec<Item>> {
     // a program consists of many (macro declarations, macro calls, instructions, comments) delimeted by spaces/newlines
-    many0(delimited(
+    many0(preceded(
         multispace0,
         alt((
             // depending on the type of item matched, put in correct item enum
+            map(comment, |comment| Item::Comment(comment.to_string())),
             map(macro_declaration, Item::MacroDeclaration),
             map(macro_call, Item::MacroCall),
             map(instruction::parse_instruction, Item::Instruction),
-            map(comment, Item::Comment),
         )),
-        // due to limitations with my program, comments on the end of the line will be discarded
-        delimited(multispace0, opt(comment), multispace0),
     ))(input)
 }
 
 #[cfg(test)]
 mod test {
+    use crate::parser::comment;
+
     use super::{
         instruction::{Instruction, Opcode},
         parse_program, Item,
     };
+
+    #[test]
+    fn test_comment_parser() {
+        let comment_str = "# a";
+        assert_eq!(comment(comment_str), Ok(("", " a")));
+    }
+
     #[test]
     fn test_program_parser_simple_division() {
         let preparsed_program = "# Code to compute a divided by b

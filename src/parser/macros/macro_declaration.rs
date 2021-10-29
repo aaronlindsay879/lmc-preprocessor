@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use nom::{
     bytes::complete::tag,
     character::complete::multispace0,
-    combinator::{map, opt},
+    combinator::{map, opt, recognize},
     multi::separated_list0,
     sequence::{delimited, pair, preceded, tuple},
     IResult,
@@ -89,6 +89,15 @@ fn substitute_argument_item<'a>(
             // then can just reconstruct a macro call
             Item::MacroCall(MacroCall::new(macro_call.get_identifier(), arguments))
         }
+        Item::Comment(comment) => {
+            let mut new_comment = comment.to_string();
+
+            for (old, new) in argument_map {
+                new_comment = new_comment.replace(old, new);
+            }
+
+            Item::Comment(new_comment)
+        }
         _ => item.clone(),
     }
 }
@@ -106,7 +115,10 @@ pub(crate) fn macro_declaration(input: &str) -> IResult<&str, MacroDeclaration> 
             // matches the argument list
             delimited(
                 tag("("),
-                separated_list0(pair(tag(","), opt(multispace0)), identifier),
+                separated_list0(
+                    pair(tag(","), opt(multispace0)),
+                    recognize(pair(tag("$"), identifier)),
+                ),
                 tag(")"),
             ),
             // matches the macro body
@@ -127,9 +139,9 @@ mod test {
 
     #[test]
     fn test_macro_parsing() {
-        let macro_str = "macro IN_STO(location) = {
+        let macro_str = "macro IN_STO($location) = {
             IN
-            STO location
+            STO $location
         }";
 
         let macro_parsed = macro_declaration(macro_str);
@@ -141,10 +153,10 @@ mod test {
             macro_parsed,
             MacroDeclaration::new(
                 "IN_STO",
-                vec!["location"],
+                vec!["$location"],
                 vec![
                     Item::Instruction(Instruction::new(None, Opcode::IN, None)),
-                    Item::Instruction(Instruction::new(None, Opcode::STO, Some("location")))
+                    Item::Instruction(Instruction::new(None, Opcode::STO, Some("$location")))
                 ]
             )
         );
